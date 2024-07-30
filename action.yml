@@ -1,0 +1,88 @@
+name: 'meson'
+description: 'handle steps for meson setup/build/test/install/dist'
+inputs:
+  actions:
+    description: 'meson action to perform'
+    type: 'string'
+    default: 'prefetch setup compile'
+  projectdir:
+    description: 'meson project root directory'
+    type: 'string'
+    default: '.'
+  builddir:
+    description: 'meson build directory'
+    type: 'string'
+    default: 'builddir'
+  cross_files:
+    description: 'cross file(s) to use'
+    type: 'string'
+    default: ''
+  options:
+    description: 'meson option to give at setup (with -D prefix)'
+    type: 'string'
+    default: ''
+  coverage:
+    description: 'build coverage reports'
+    type: 'boolean'
+    default: false
+  targets:
+    description: 'target to build'
+    type: 'string'
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Meson Prefetch'
+      if: ${{ contains(fromJSON(inputs.actions), 'prefetch') }}
+      working-directory: ${{ inputs.projectdir }}
+      shell: bash
+      run: |
+        meson subprojects download || true
+        meson subprojects foreach pip3 install -r requirements.txt || true
+
+    - name: 'Meson Setup'
+      if: ${{ contains(fromJSON(inputs.actions), 'setup') }}
+      working-directory: ${{ inputs.projectdir }}
+      shell: bash
+      run: |
+        CROSS_FILES=
+        for f in ${{ inputs.cross_files }}; do
+          CROSS_FILES+=" --cross-file ${f} "
+        done
+        meson setup ${{ inputs.options }} ${CROSS_FILES} ${{ inputs.builddir }}
+
+    - name: 'Meson Compile'
+      if: ${{ contains(fromJSON(inputs.actions), 'compile') }}
+      working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
+      shell: bash
+      run: |
+        ninja ${{ inputs.targets }}
+
+    - name: 'Meson Test'
+      if: ${{ contains(fromJSON(inputs.actions), 'test') }}
+      working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
+      shell: bash
+      run: |
+        ninja test
+
+    - name: 'Meson Coverage Report'
+      if: ${{ contains(fromJSON(inputs.actions), 'test') && inputs.coverage == 'true' }}
+      working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
+      shell: bash
+      run: |
+        ninja coverage
+
+    - name: 'Meson Install'
+      if: ${{ contains(fromJSON(inputs.actions), 'install') }}
+      working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
+      shell: bash
+      run: |
+        ninja install
+
+    - name: 'Meson Dist'
+      if: ${{ contains(fromJSON(inputs.actions), 'dist') }}
+      working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
+      shell: bash
+      run: |
+        meson dist --no-tests --include-subprojects
