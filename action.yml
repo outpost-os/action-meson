@@ -29,6 +29,10 @@ inputs:
     description: 'target to build'
     type: 'string'
     default: ''
+  pip:
+    description: 'pip binary name'
+    type: 'string'
+    default: 'pip3'
 
 runs:
   using: 'composite'
@@ -39,7 +43,7 @@ runs:
       shell: bash
       run: |
         meson subprojects download || true
-        meson subprojects foreach pip3 install -r requirements.txt || true
+        meson subprojects foreach ${{ inputs.pip }} install -r requirements.txt || true
 
     - name: 'Meson Setup'
       if: ${{ contains(fromJSON(inputs.actions), 'setup') }}
