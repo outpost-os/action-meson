@@ -40,7 +40,7 @@ runs:
     - name: 'Meson Prefetch'
       if: ${{ contains(fromJSON(inputs.actions), 'prefetch') }}
       working-directory: ${{ inputs.projectdir }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         meson subprojects download || true
         meson subprojects foreach python3 -m pip install -r requirements.txt || true
@@ -48,7 +48,7 @@ runs:
     - name: 'Meson Setup'
       if: ${{ contains(fromJSON(inputs.actions), 'setup') }}
       working-directory: ${{ inputs.projectdir }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         CROSS_FILES=
         for f in ${{ inputs.cross_files }}; do
@@ -59,34 +59,34 @@ runs:
     - name: 'Meson Compile'
       if: ${{ contains(fromJSON(inputs.actions), 'compile') }}
       working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         ninja ${{ inputs.targets }}
 
     - name: 'Meson Test'
       if: ${{ contains(fromJSON(inputs.actions), 'test') }}
       working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         ninja test
 
     - name: 'Meson Coverage Report'
       if: ${{ contains(fromJSON(inputs.actions), 'test') && inputs.coverage == 'true' }}
       working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         ninja coverage
 
     - name: 'Meson Install'
       if: ${{ contains(fromJSON(inputs.actions), 'install') }}
       working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         ninja install
 
     - name: 'Meson Dist'
       if: ${{ contains(fromJSON(inputs.actions), 'dist') }}
       working-directory: ${{ format('{0}/{1}', inputs.projectdir, inputs.builddir) }}
-      shell: ${{ input.shell }}
+      shell: ${{ inputs.shell }}
       run: |
         meson dist --no-tests --include-subprojects
